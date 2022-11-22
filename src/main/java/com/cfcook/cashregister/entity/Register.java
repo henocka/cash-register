@@ -27,4 +27,6 @@ public class Register {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "cash_id", referencedColumnName = "id")
     private Cash currentCashBalance;
+
+    private double totalValue;
 }

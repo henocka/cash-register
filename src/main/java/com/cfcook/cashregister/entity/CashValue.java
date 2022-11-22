@@ -21,4 +21,6 @@ public class CashValue {
     @Enumerated(EnumType.ORDINAL)
     private CashType cashType;
 
+    private double amount;
+
 }
