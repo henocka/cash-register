@@ -28,5 +28,5 @@ public class Register {
     @JoinColumn(name = "cash_id", referencedColumnName = "id")
     private Cash currentCashBalance;
 
-    private double totalValue;
+    private int totalValue;
 }
