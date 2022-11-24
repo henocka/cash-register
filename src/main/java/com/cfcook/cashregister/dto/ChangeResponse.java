@@ -8,12 +8,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
-    private State state;
-    private Map<String, Integer> cashAmount;
+public class ChangeResponse {
+    private long registerId;
+    private String registerName;
+    private State currentState;
+    private Map<CashType, Integer> changeByDenominations;
+    private int requestedCash;
+    private String message;
 }

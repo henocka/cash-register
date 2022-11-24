@@ -1,5 +1,6 @@
 package com.cfcook.cashregister.service;
 
+import com.cfcook.cashregister.dto.ChangeResponse;
 import com.cfcook.cashregister.dto.RegisterDto;
 import com.cfcook.cashregister.entity.*;
 import com.cfcook.cashregister.repository.CashRegisterRepository;
@@ -41,24 +42,23 @@ public class CashRegisterService {
      */
 
     public ResponseEntity<RegisterDto> updateTheCurrentBalance(int registerId, Map<CashType, CashValue> newCash, State state) {
+
         int totalBalance = 0;
         Register register = cashRegisterRepository.findById(Long.valueOf(registerId)).orElse(null);
-        Map<CashType, CashValue> currentCashAmount = null != register ?
-                register.getCurrentCashBalance().getCashAmount() :
-                newCash;
-
-        for (Map.Entry<CashType, CashValue> currentCashBalanceEntry : currentCashAmount.entrySet()) {
-            int currentAmount;
-            if (state.name().equals(State.PUT.name())) {
-                currentAmount = currentCashBalanceEntry.getValue().getAmount() + newCash.get(currentCashBalanceEntry.getKey()).getAmount();
-            } else {
-                currentAmount = currentCashBalanceEntry.getValue().getAmount() - newCash.get(currentCashBalanceEntry.getKey()).getAmount();
-            }
-            totalBalance += currentAmount;
-            currentCashBalanceEntry.getValue().setAmount(currentAmount);
-        }
+        Map<CashType, CashValue> currentCashAmount;
 
         if (null != register) {
+            currentCashAmount = register.getCurrentCashBalance().getCashAmount();
+            for (Map.Entry<CashType, CashValue> currentCashBalanceEntry : currentCashAmount.entrySet()) {
+                int currentAmount;
+                if (state.name().equals(State.PUT.name())) {
+                    currentAmount = currentCashBalanceEntry.getValue().getAmount() + newCash.get(currentCashBalanceEntry.getKey()).getAmount();
+                } else {
+                    currentAmount = currentCashBalanceEntry.getValue().getAmount() - newCash.get(currentCashBalanceEntry.getKey()).getAmount();
+                }
+                totalBalance += (currentAmount * getCrossmap().get(currentCashBalanceEntry.getKey()));
+                currentCashBalanceEntry.getValue().setAmount(currentAmount);
+            }
             register.setState(state);
             register.setCurrentCashBalance(
                     Cash.builder()
@@ -68,6 +68,11 @@ public class CashRegisterService {
             register.setTotalValue(totalBalance);
             return convertToRegisterDto(cashRegisterRepository.save(register));
         } else {
+            currentCashAmount = newCash;
+            for (Map.Entry<CashType, CashValue> currentCashBalanceEntry : currentCashAmount.entrySet()) {
+                int currentAmount = currentCashBalanceEntry.getValue().getAmount();
+                totalBalance += (currentAmount * getCrossmap().get(currentCashBalanceEntry.getKey()));
+            }
             return convertToRegisterDto(cashRegisterRepository.save(Register.builder()
                     .state(state)
                     .currentCashBalance(Cash.builder().cashAmount(newCash).build())
@@ -77,9 +82,9 @@ public class CashRegisterService {
 
     }
 
-    public ResponseEntity<RegisterDto> getChange(int registerId, int change) {
+    public ResponseEntity<ChangeResponse> getChange(int registerId, int change) {
         int noOfTwenties, noOfTens, noOfFives, noOfTwos, noOfOnes, sum;
-        noOfTwenties =  noOfTens = noOfFives = noOfTwos = noOfOnes = sum = 0;
+        noOfTwenties = noOfTens = noOfFives = noOfTwos = noOfOnes = sum = 0;
         RegisterDto register = getCurrentBalance(registerId).getBody();
         int availableTwenties = register.getCurrentCashBalance().get(CashType.$20s);
         int availableTens = register.getCurrentCashBalance().get(CashType.$10s);
@@ -88,7 +93,12 @@ public class CashRegisterService {
         int availableOnes = register.getCurrentCashBalance().get(CashType.$1s);
         int totalCashOnHand = register.getCurrentTotalSum();
         if (totalCashOnHand < change) {
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            ChangeResponse changeResponse = ChangeResponse.builder()
+                    .currentState(State.CHANGE)
+                    .requestedCash(change)
+                    .message("Sorry we don't have a change right now.")
+                    .build();
+            return new ResponseEntity<>(changeResponse, HttpStatus.OK);
         }
 
         while (sum < change) {
@@ -108,7 +118,7 @@ public class CashRegisterService {
                 sum = sum + 2;
                 availableTwos = availableTwos - 1;
                 noOfTwos = noOfTwos + 1;
-            } else if (availableOnes != 0 && (sum + 1) < change) {
+            } else if (availableOnes != 0 && (sum + 1) <= change) {
                 sum = sum + 1;
                 availableOnes = availableOnes - 1;
                 noOfOnes = noOfOnes + 1;
@@ -119,7 +129,12 @@ public class CashRegisterService {
         }
 
         if (sum != change) {
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            ChangeResponse changeResponse = ChangeResponse.builder()
+                    .currentState(State.CHANGE)
+                    .requestedCash(change)
+                    .message("Sorry we don't have a change right now.")
+                    .build();
+            return new ResponseEntity<>(changeResponse, HttpStatus.OK);
         }
 
         Map<CashType, Integer> changeMap = new HashMap<>();
@@ -128,12 +143,14 @@ public class CashRegisterService {
         changeMap.put(CashType.$5s, noOfFives);
         changeMap.put(CashType.$2s, noOfTwos);
         changeMap.put(CashType.$1s, noOfOnes);
-        RegisterDto registerDto = RegisterDto.builder()
+
+        ChangeResponse changeResponse = ChangeResponse.builder()
                 .currentState(State.CHANGE)
-                .currentCashBalance(changeMap)
-                .currentTotalSum(change)
+                .changeByDenominations(changeMap)
+                .requestedCash(change)
                 .build();
-        return new ResponseEntity<>(registerDto, HttpStatus.OK);
+
+        return new ResponseEntity<>(changeResponse, HttpStatus.OK);
 
     }
 
@@ -152,5 +169,48 @@ public class CashRegisterService {
                 .currentTotalSum(registerResult.getTotalValue())
                 .build();
         return new ResponseEntity<>(registerDto, HttpStatus.OK);
+    }
+
+
+    public Register updateTheCurrentBalanceOld(int registerId, Map<CashType, CashValue> newCash, State state) {
+        int totalBalance = 0;
+        Register register = cashRegisterRepository.findById(Long.valueOf(registerId)).orElse(null);
+        if (null != register) {
+
+            Map<CashType, CashValue> currentCashBalance = register.getCurrentCashBalance().getCashAmount();
+            for (Map.Entry<CashType, CashValue> currentCashBalanceEntry : currentCashBalance.entrySet()) {
+                int currentAmount;
+                if (state.name().equals(State.PUT)) {
+                    currentAmount = currentCashBalanceEntry.getValue().getAmount() + newCash.get(currentCashBalanceEntry.getKey()).getAmount();
+                } else {
+                    currentAmount = currentCashBalanceEntry.getValue().getAmount() - newCash.get(currentCashBalanceEntry.getKey()).getAmount();
+                }
+
+                totalBalance += (currentAmount * getCrossmap().get(currentCashBalanceEntry.getKey().name()));
+                currentCashBalanceEntry.getValue().setAmount(currentAmount);
+            }
+
+//             return cashRegisterRepository.updateCurrentBalance(Long.valueOf(registerId), currentCashBalance);
+            return null;
+        }
+        return cashRegisterRepository.save(Register.builder()
+                .currentCashBalance(Cash.builder().cashAmount(newCash).build())
+                .totalValue(totalBalance)
+                .build());
+    }
+
+    public Register getCurrentBalanceOld(int registerId) {
+        Register register = cashRegisterRepository.findById(Long.valueOf(registerId)).orElse(null);
+        return register;
+    }
+
+    private Map<CashType, Integer> getCrossmap() {
+        Map<CashType, Integer> crossMap = new HashMap<>();
+        crossMap.put(CashType.$20s, 20);
+        crossMap.put(CashType.$10s, 10);
+        crossMap.put(CashType.$5s, 5);
+        crossMap.put(CashType.$2s, 2);
+        crossMap.put(CashType.$1s, 1);
+        return crossMap;
     }
 }

@@ -1,6 +1,7 @@
 package com.cfcook.cashregister.controller;
 
 import com.cfcook.cashregister.dto.ChangeRequest;
+import com.cfcook.cashregister.dto.ChangeResponse;
 import com.cfcook.cashregister.dto.RegisterDto;
 import com.cfcook.cashregister.dto.RegisterRequest;
 import com.cfcook.cashregister.entity.CashType;
@@ -27,22 +28,42 @@ public class CashRegisterController {
     @PostMapping ("/put")
     public ResponseEntity<RegisterDto> updateTheCurrentBalance(@RequestParam int register_id, @RequestBody RegisterRequest registerRequestEntity) {
         Map<CashType, CashValue> cash = new HashMap<>();
-        for (Map.Entry<CashType, Integer> currentCash : registerRequestEntity.getCashAmount().entrySet()) {
-            cash.put(currentCash.getKey(), CashValue.builder().amount(currentCash.getValue()).build());
+        for (Map.Entry<String, Integer> currentCash : registerRequestEntity.getCashAmount().entrySet()) {
+            cash.put(CashType.valueOf(currentCash.getKey()), CashValue.builder().cashType(CashType.valueOf(currentCash.getKey())).amount(currentCash.getValue()).build());
         }
         return cashRegisterService.updateTheCurrentBalance(register_id, cash, registerRequestEntity.getState());
     }
 
 
     @PostMapping ("/change")
-    public ResponseEntity<RegisterDto> getChange(@RequestParam int register_id, @RequestBody ChangeRequest changeRequestEntity) {
+    public ResponseEntity<ChangeResponse> getChange(@RequestParam int register_id, @RequestBody ChangeRequest changeRequestEntity) {
         return  cashRegisterService.getChange( register_id,  changeRequestEntity.getChange());
 
     }
+
     @GetMapping("/get")
     public ResponseEntity<RegisterDto>  getCurrentBalance(@RequestParam int register_id) {
         return   cashRegisterService.getCurrentBalance(register_id);
     }
+
+
+//    @GetMapping("/put")
+//    public void updateTheCurrentBalance( ) {
+//        Map<CashType, CashValue> cashs = new HashMap<>();
+//        cashs.put(CashType.$20s, CashValue.builder().cashType(CashType.$20s).amount(30).build());
+//        cashs.put(CashType.$10s, CashValue.builder().cashType(CashType.$10s).amount(20).build());
+//        cashs.put(CashType.$5s, CashValue.builder().cashType(CashType.$5s).amount(90).build());
+//        cashs.put(CashType.$2s, CashValue.builder().cashType(CashType.$2s).amount(60).build());
+//        cashs.put(CashType.$1s, CashValue.builder().cashType(CashType.$1s).amount(10).build());
+//
+//        cashRegisterService.updateTheCurrentBalance(1, cashs, State.PUT);
+//    }
+
+
+//    @GetMapping("/get")
+//    public Register getCurrentBalance() {
+//        return cashRegisterService.getCurrentBalanceOld(1);
+//    }
 
 
 }
