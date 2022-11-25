@@ -11,7 +11,17 @@ import java.util.Map;
 
 @Repository
 public interface CashRegisterRepository extends JpaRepository<Register, Long> {
+//
+//    @Query("")
+//    Register updateCurrentBalance(long registerId, Map<CashType, CashValue> currentCashBalance);
 
-    @Query("")
-    Register updateCurrentBalance(long registerId, Map<CashType, CashValue> currentCashBalance);
+//    @Query(value = "SELECT * FROM Register R " +
+//            "        WHERE register_id = :" +
+//            "        AND ActiveFlag = 1" +
+//            "        AND ProductId = :ProductId" +
+//            "        AND NotificationId NOT IN" +
+//            "        (select NotificationId from Notification.AlertsActivity " +
+//            "               where Dismiss = 1 AND UserEmail = :UserEmail)" +
+//            "        AND GETDATE() BETWEEN StartDateTime AND EndDateTime ORDER BY StartDateTime DESC",
+//            nativeQuery = true)
 }

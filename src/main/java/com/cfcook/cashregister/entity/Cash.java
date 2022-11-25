@@ -17,7 +17,7 @@ import java.util.Map;
 public class Cash {
     @Id
     @GeneratedValue
-    private Long id;
+    private long id;
 
     @OneToMany(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "cash_id", referencedColumnName = "id")

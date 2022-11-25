@@ -15,12 +15,12 @@ import javax.persistence.*;
 public class CashValue {
     @Id
     @GeneratedValue
-    private Long id;
+    private long id;
 
 
     @Enumerated(EnumType.ORDINAL)
     private CashType cashType;
 
-    private double amount;
+    private int amount;
 
 }
