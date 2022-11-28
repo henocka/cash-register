@@ -47,23 +47,6 @@ public class CashRegisterController {
     }
 
 
-//    @GetMapping("/put")
-//    public void updateTheCurrentBalance( ) {
-//        Map<CashType, CashValue> cashs = new HashMap<>();
-//        cashs.put(CashType.$20s, CashValue.builder().cashType(CashType.$20s).amount(30).build());
-//        cashs.put(CashType.$10s, CashValue.builder().cashType(CashType.$10s).amount(20).build());
-//        cashs.put(CashType.$5s, CashValue.builder().cashType(CashType.$5s).amount(90).build());
-//        cashs.put(CashType.$2s, CashValue.builder().cashType(CashType.$2s).amount(60).build());
-//        cashs.put(CashType.$1s, CashValue.builder().cashType(CashType.$1s).amount(10).build());
-//
-//        cashRegisterService.updateTheCurrentBalance(1, cashs, State.PUT);
-//    }
-
-
-//    @GetMapping("/get")
-//    public Register getCurrentBalance() {
-//        return cashRegisterService.getCurrentBalanceOld(1);
-//    }
 
 
 }

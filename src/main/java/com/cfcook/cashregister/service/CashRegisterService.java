@@ -172,38 +172,6 @@ public class CashRegisterService {
     }
 
 
-    public Register updateTheCurrentBalanceOld(int registerId, Map<CashType, CashValue> newCash, State state) {
-        int totalBalance = 0;
-        Register register = cashRegisterRepository.findById(Long.valueOf(registerId)).orElse(null);
-        if (null != register) {
-
-            Map<CashType, CashValue> currentCashBalance = register.getCurrentCashBalance().getCashAmount();
-            for (Map.Entry<CashType, CashValue> currentCashBalanceEntry : currentCashBalance.entrySet()) {
-                int currentAmount;
-                if (state.name().equals(State.PUT)) {
-                    currentAmount = currentCashBalanceEntry.getValue().getAmount() + newCash.get(currentCashBalanceEntry.getKey()).getAmount();
-                } else {
-                    currentAmount = currentCashBalanceEntry.getValue().getAmount() - newCash.get(currentCashBalanceEntry.getKey()).getAmount();
-                }
-
-                totalBalance += (currentAmount * getCrossmap().get(currentCashBalanceEntry.getKey().name()));
-                currentCashBalanceEntry.getValue().setAmount(currentAmount);
-            }
-
-//             return cashRegisterRepository.updateCurrentBalance(Long.valueOf(registerId), currentCashBalance);
-            return null;
-        }
-        return cashRegisterRepository.save(Register.builder()
-                .currentCashBalance(Cash.builder().cashAmount(newCash).build())
-                .totalValue(totalBalance)
-                .build());
-    }
-
-    public Register getCurrentBalanceOld(int registerId) {
-        Register register = cashRegisterRepository.findById(Long.valueOf(registerId)).orElse(null);
-        return register;
-    }
-
     private Map<CashType, Integer> getCrossmap() {
         Map<CashType, Integer> crossMap = new HashMap<>();
         crossMap.put(CashType.$20s, 20);
